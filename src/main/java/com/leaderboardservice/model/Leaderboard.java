@@ -2,19 +2,18 @@ package com.leaderboardservice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchConnectionDetails;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "leaderboards")
-@Builder
-@Getter
-@Setter
-public class UserScore {
+public class Leaderboard {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer userId;
@@ -25,8 +24,5 @@ public class UserScore {
     private int score;
 
     @CreatedDate
-    private LocalDateTime date;
-
-
-
+    private LocalDateTime submissionDate;
 }

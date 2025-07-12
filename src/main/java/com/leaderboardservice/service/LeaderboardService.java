@@ -1,20 +1,22 @@
 package com.leaderboardservice.service;
 
 import com.leaderboardservice.dto.SubmissionDto;
-import com.leaderboardservice.model.UserScore;
+import com.leaderboardservice.model.Leaderboard;
 import com.leaderboardservice.repository.LeaderboardRepo;
 import com.leaderboardservice.utils.AppResponse;
 import com.leaderboardservice.utils.LeaderboardResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LeaderboardService {
@@ -22,15 +24,15 @@ public class LeaderboardService {
 
     @CachePut(value = "score", key = "#dto.username")
     public AppResponse submitScore(SubmissionDto dto){
-        Optional<UserScore> existingUser = repository.findByUsername(dto.getUsername());
-        UserScore score = existingUser.map(userScore -> {
-            userScore.setScore(dto.getScore());
-            return userScore;
+        Optional<Leaderboard> existingUser = repository.findByUsername(dto.getUsername());
+        Leaderboard score = existingUser.map(Leaderboard -> {
+            Leaderboard.setScore(dto.getScore());
+            return Leaderboard;
         }).orElse(
-                UserScore.builder()
+                Leaderboard.builder()
                         .username(dto.getUsername())
                         .score(dto.getScore())
-                        .date(LocalDateTime.now())
+                        .submissionDate(LocalDateTime.now())
                         .build()
         );
         repository.save(score);
@@ -43,51 +45,42 @@ public class LeaderboardService {
     }
 
 
-    @Cacheable
-    public List<LeaderboardResponse> getTopPlayers() {
-        List<UserScore> topUsers = repository.findTop100ByOrderByScoreDesc();
+    @Cacheable(value = "topUsers")
+    public List<LeaderboardResponse> getTopPlayers(int size) {
+        List<Leaderboard> topUsers = repository.findTopN(PageRequest.of(0, size));
+        List<LeaderboardResponse> responseList = new ArrayList<>();
 
-        int[] rank = {1};
-        return topUsers.stream()
-                .map(user -> LeaderboardResponse.builder()
-                        .username(user.getUsername())
-                        .score(user.getScore())
-                        .rank(rank[0]++)
-                        .build())
-                .collect(Collectors.toList());
+        for (int i = 0; i < topUsers.size(); i++) {
+            Leaderboard user = topUsers.get(i);
+            LeaderboardResponse response = LeaderboardResponse.builder()
+                    .username(user.getUsername())
+                    .score(user.getScore())
+                    .rank(i + 1)
+                    .build();
+            responseList.add(response);
+        }
+
+        return responseList;
     }
 
 
     @Cacheable(value = "score", key = "#username")
     public AppResponse getRank(String username){
-        System.out.println(" getRank called with: " + username);
-        List<UserScore> sorted = repository.findAll()
-                .stream()
-                .sorted(Comparator.comparingInt(UserScore::getScore).reversed())
-                .collect(Collectors.toList());
-
-        Map<String, LeaderboardResponse> rankMap = new HashMap<>();
-        int rank = 1;
-
-        for (UserScore user : sorted) {
-            rankMap.put(user.getUsername().toLowerCase(), LeaderboardResponse.builder()
-                    .username(user.getUsername())
-                    .score(user.getScore())
-                    .rank(rank++)
-                    .build());
+        Optional<Leaderboard> user = repository.findByUsername(username);
+        if (user.isEmpty()) {
+            return AppResponse.builder()
+                    .responseMessage("User not found")
+                    .build();
         }
-            LeaderboardResponse result = rankMap.get(username.toLowerCase());
+        int rank = repository.getRankForUser(username);
 
-            if (result != null) {
-                return AppResponse.builder()
-                        .responseMessage("Rank displayed")
-                        .data(result)
-                        .build();
-            } else {
-                return AppResponse.builder()
-                        .responseMessage("User not found")
-                        .build();
-            }
+        return AppResponse.builder()
+                .responseMessage("Rank displayed")
+                .data(LeaderboardResponse.builder()
+                        .username(user.get().getUsername())
+                        .score(user.get().getScore())
+                        .rank(rank)
+                        .build())
+                .build();
     }
-
-    }
+}

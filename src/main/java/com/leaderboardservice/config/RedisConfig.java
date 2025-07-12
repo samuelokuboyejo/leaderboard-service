@@ -25,7 +25,7 @@ public class RedisConfig {
         return (builder) -> builder
                 .withCacheConfiguration("itemCache",
                         RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(10)))
-                .withCacheConfiguration("customerCache",
+                .withCacheConfiguration("scoreCache",
                         RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(5)));
     }
 }

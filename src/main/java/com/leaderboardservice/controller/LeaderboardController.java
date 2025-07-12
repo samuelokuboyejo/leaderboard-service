@@ -9,24 +9,23 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/leaderboard")
 public class LeaderboardController {
 
     private final LeaderboardService leaderboardService;
 
-    @PostMapping("/submit")
+    @PostMapping("/submissions")
     public ResponseEntity<AppResponse>  submitScore(@RequestBody SubmissionDto dto){
         return ResponseEntity.ok(leaderboardService.submitScore(dto));
     }
 
-    @GetMapping("/rank/{username}")
+    @GetMapping("/{username}/rank")
     public ResponseEntity<AppResponse>  getRank(@PathVariable String username){
         return ResponseEntity.ok(leaderboardService.getRank(username));
     }
 
-    @GetMapping("/top")
-    public ResponseEntity<Object>  getTopPlayers(){
-        return ResponseEntity.ok(leaderboardService.getTopPlayers());
+    @GetMapping("/scores")
+    public ResponseEntity<Object>  getTopPlayers(@RequestParam (defaultValue = "100") int size){
+        return ResponseEntity.ok(leaderboardService.getTopPlayers(size));
     }
 
 }
