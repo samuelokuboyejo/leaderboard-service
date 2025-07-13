@@ -1,20 +1,21 @@
 package com.leaderboardservice.service;
 
 import com.leaderboardservice.dto.SubmissionDto;
+import com.leaderboardservice.exceptions.UserNotFoundException;
 import com.leaderboardservice.model.Leaderboard;
 import com.leaderboardservice.repository.LeaderboardRepo;
 import com.leaderboardservice.utils.AppResponse;
 import com.leaderboardservice.utils.LeaderboardResponse;
+import com.leaderboardservice.utils.ScoreResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,7 +24,8 @@ public class LeaderboardService {
     private final LeaderboardRepo repository;
 
     @CachePut(value = "score", key = "#dto.username")
-    public AppResponse submitScore(SubmissionDto dto){
+    @CacheEvict(value = "topUsers", allEntries = true)
+    public ScoreResponse submitScore(SubmissionDto dto){
         Optional<Leaderboard> existingUser = repository.findByUsername(dto.getUsername());
         Leaderboard score = existingUser.map(Leaderboard -> {
             Leaderboard.setScore(dto.getScore());
@@ -35,11 +37,12 @@ public class LeaderboardService {
                         .submissionAt(LocalDateTime.now())
                         .build()
         );
-        repository.save(score);
-        String responseMessage = "Score submitted successfully";
+        Leaderboard savedScore = repository.save(score);
 
-        return AppResponse.builder()
-                .responseMessage(responseMessage)
+        return ScoreResponse.builder()
+                .id(savedScore.getUserId())
+                .username(dto.getUsername())
+                .score(dto.getScore())
                 .build();
 
     }
@@ -66,19 +69,14 @@ public class LeaderboardService {
 
     @Cacheable(value = "score", key = "#username")
     public AppResponse getRank(String username){
-        Optional<Leaderboard> user = repository.findByUsername(username);
-        if (user.isEmpty()) {
-            return AppResponse.builder()
-                    .responseMessage("User not found")
-                    .build();
-        }
+        Leaderboard user = repository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
         int rank = repository.getRankForUser(username);
 
         return AppResponse.builder()
                 .responseMessage("Rank displayed")
                 .data(LeaderboardResponse.builder()
-                        .username(user.get().getUsername())
-                        .score(user.get().getScore())
+                        .username(user.getUsername())
+                        .score(user.getScore())
                         .rank(rank)
                         .build())
                 .build();

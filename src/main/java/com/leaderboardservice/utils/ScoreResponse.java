@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LeaderboardResponse {
+public class ScoreResponse {
 
+    private Integer id;
     private String username;
     private int score;
-    private int rank;
 }

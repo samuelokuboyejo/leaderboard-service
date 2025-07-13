@@ -3,6 +3,7 @@ package com.leaderboardservice.controller;
 import com.leaderboardservice.dto.SubmissionDto;
 import com.leaderboardservice.service.LeaderboardService;
 import com.leaderboardservice.utils.AppResponse;
+import com.leaderboardservice.utils.ScoreResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +15,7 @@ public class LeaderboardController {
     private final LeaderboardService leaderboardService;
 
     @PostMapping("/submissions")
-    public ResponseEntity<AppResponse>  submitScore(@RequestBody SubmissionDto dto){
+    public ResponseEntity<ScoreResponse>  submitScore(@RequestBody SubmissionDto dto){
         return ResponseEntity.ok(leaderboardService.submitScore(dto));
     }
 
