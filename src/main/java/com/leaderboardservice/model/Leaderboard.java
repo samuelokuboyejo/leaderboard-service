@@ -24,5 +24,5 @@ public class Leaderboard {
     private int score;
 
     @CreatedDate
-    private LocalDateTime submissionDate;
+    private LocalDateTime submissionAt;
 }

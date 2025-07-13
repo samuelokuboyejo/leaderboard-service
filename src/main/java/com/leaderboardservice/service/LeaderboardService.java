@@ -32,7 +32,7 @@ public class LeaderboardService {
                 Leaderboard.builder()
                         .username(dto.getUsername())
                         .score(dto.getScore())
-                        .submissionDate(LocalDateTime.now())
+                        .submissionAt(LocalDateTime.now())
                         .build()
         );
         repository.save(score);

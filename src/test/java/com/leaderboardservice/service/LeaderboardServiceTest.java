@@ -18,7 +18,4 @@ public class LeaderboardServiceTest {
         AppResponse result = leaderboardService.submitScore(submissionDto);
         Assertions.assertEquals("Score submitted successfully", result.getResponseMessage());
     }
-
-
-    
 }
